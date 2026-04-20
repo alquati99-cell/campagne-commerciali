@@ -1062,31 +1062,42 @@ async function generateCardPDF(campaign, tabColor, onToast) {
 
   onToast('⏳ Generazione PDF…');
 
-  // Render card in a hidden off-screen container
+  // Pre-fetch image as blob → same-origin URL → no CORS issues with html2canvas
+  let blobUrl = campaign.img;
+  if (campaign.img) {
+    try {
+      const resp = await fetch(campaign.img, { mode: 'cors' });
+      const blob = await resp.blob();
+      blobUrl = URL.createObjectURL(blob);
+    } catch(_) { /* use original URL as fallback */ }
+  }
+
+  const campaignForRender = { ...campaign, img: blobUrl };
+
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;z-index:-1;';
+  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;pointer-events:none;';
   document.body.appendChild(wrap);
 
-  // Use a plain div wrapper so html2canvas captures the card correctly
-  const inner = document.createElement('div');
-  inner.style.cssText = 'width:420px;';
-  wrap.appendChild(inner);
-
-  const tmpRoot = ReactDOM.createRoot(inner);
+  const tmpRoot = ReactDOM.createRoot(wrap);
   tmpRoot.render(
     React.createElement(CampaignCard, {
-      campaign, tabColor, showDesc: true, onToast: () => {}, forPdf: true
+      campaign: campaignForRender, tabColor, showDesc: true, onToast: () => {}, forPdf: true
     })
   );
 
-  // Wait for render + image load
-  await new Promise(r => setTimeout(r, 600));
+  // Wait for React to commit, then wait for the img to load
+  await new Promise(r => setTimeout(r, 150));
+  const imgs = Array.from(wrap.querySelectorAll('img'));
+  await Promise.all(imgs.map(img => new Promise(r => {
+    if (img.complete && img.naturalHeight !== 0) return r();
+    img.onload = r; img.onerror = r; setTimeout(r, 4000);
+  })));
 
   try {
-    const canvas = await html2canvas(inner.firstChild, {
-      useCORS: true,
+    const canvas = await html2canvas(wrap.firstChild, {
+      useCORS: false,
       allowTaint: false,
-      backgroundColor: null,
+      backgroundColor: '#152540',
       scale: 2,
       logging: false,
     });
@@ -1098,24 +1109,16 @@ async function generateCardPDF(campaign, tabColor, onToast) {
     doc.setFillColor(13, 27, 46);
     doc.rect(0, 0, 210, 297, 'F');
 
-    // Subtle noise dots
-    doc.setFillColor(30, 50, 88);
-    for (let i = 0; i < 60; i++) {
-      doc.circle(Math.random()*210, Math.random()*297, 0.3, 'F');
-    }
+    // Card centered with shadow
+    const imgData = canvas.toDataURL('image/jpeg', 0.93);
+    const cardW = 168;
+    const cardH = cardW * canvas.height / canvas.width;
+    const x = (210 - cardW) / 2;
+    const y = Math.max(18, (297 - cardH) / 2);
 
-    // Card image centered on page
-    const imgData = canvas.toDataURL('image/png');
-    const cardWmm = 168;
-    const cardHmm = cardWmm * canvas.height / canvas.width;
-    const x = (210 - cardWmm) / 2;
-    const y = Math.max(20, (297 - cardHmm) / 2);
-
-    // Shadow illusion — slightly larger dark rect behind
     doc.setFillColor(5, 12, 24);
-    doc.roundedRect(x + 2, y + 3, cardWmm, cardHmm, 5, 5, 'F');
-
-    doc.addImage(imgData, 'PNG', x, y, cardWmm, cardHmm, '', 'FAST');
+    doc.roundedRect(x + 2.5, y + 3, cardW, cardH, 5, 5, 'F');
+    doc.addImage(imgData, 'JPEG', x, y, cardW, cardH);
 
     // Footer
     doc.setFont('helvetica', 'normal');
@@ -1127,10 +1130,12 @@ async function generateCardPDF(campaign, tabColor, onToast) {
     doc.save(`${campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}_2026.pdf`);
     onToast(`✅ PDF scaricato — ${campaign.title}`);
   } catch(e) {
-    onToast('❌ Errore generazione PDF');
+    console.error('PDF error:', e);
+    onToast('❌ Errore: ' + (e.message || 'generazione fallita'));
   } finally {
     tmpRoot.unmount();
     document.body.removeChild(wrap);
+    if (blobUrl !== campaign.img) URL.revokeObjectURL(blobUrl);
   }
 }
 
