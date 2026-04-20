@@ -442,8 +442,6 @@
 
     .carousel-nav { gap: 10px; margin-top: 16px; }
 
-    /* On mobile: only center card visible */
-    .carousel-item[data-side="true"] { display: none !important; }
 
     /* Mappa: tap-to-open */
     .mappa-tile { cursor: pointer; }
@@ -1310,8 +1308,17 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
   const onPointerUp = (e) => {
     if (dragStart.current === null) return;
     const dx = e.clientX - dragStart.current;
-    if (dx < -40) setIdx(i => Math.min(campaigns.length - 1, i + 1));
-    if (dx >  40) setIdx(i => Math.max(0, i - 1));
+    const threshold = window.innerWidth <= 640 ? 30 : 40;
+    if (dx < -threshold) setIdx(i => Math.min(campaigns.length - 1, i + 1));
+    if (dx >  threshold) setIdx(i => Math.max(0, i - 1));
+    dragStart.current = null;
+  };
+  const onTouchStart = (e) => { dragStart.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (dragStart.current === null) return;
+    const dx = e.changedTouches[0].clientX - dragStart.current;
+    if (dx < -30) setIdx(i => Math.min(campaigns.length - 1, i + 1));
+    if (dx >  30) setIdx(i => Math.max(0, i - 1));
     dragStart.current = null;
   };
 
@@ -1327,12 +1334,13 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
     const absOff = Math.abs(offset);
     if (absOff > 3) return { display: 'none' };
 
-    const tx = offset * 280;
-    const tz = -absOff * 120;
-    const ry = offset * -28;
-    const scale = absOff === 0 ? 1 : absOff === 1 ? 0.82 : absOff === 2 ? 0.68 : 0.56;
-    const opacity = absOff === 0 ? 1 : absOff === 1 ? 0.7 : absOff === 2 ? 0.4 : 0.2;
-    const blur = absOff === 0 ? 0 : absOff * 1.5;
+    const mobile = window.innerWidth <= 640;
+    const tx     = offset * (mobile ? Math.min(window.innerWidth * 0.72, 260) : 280);
+    const tz     = -absOff * (mobile ? 60 : 120);
+    const ry     = offset * (mobile ? -18 : -28);
+    const scale  = absOff === 0 ? 1 : absOff === 1 ? (mobile ? 0.78 : 0.82) : absOff === 2 ? 0.62 : 0.5;
+    const opacity = absOff === 0 ? 1 : absOff === 1 ? 0.6 : absOff === 2 ? 0.3 : 0.1;
+    const blur   = absOff === 0 ? 0 : absOff * (mobile ? 2 : 1.5);
     const zIndex = 10 - absOff;
 
     return {
@@ -1350,7 +1358,9 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
         className="carousel-wrap"
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
-        style={{ '--accent-color': tabColor }}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        style={{ '--accent-color': tabColor, touchAction: 'pan-y' }}
       >
         <div className="carousel-stage">
           {campaigns.map((c, i) => (
