@@ -9,7 +9,6 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1053,90 +1052,73 @@ const IconRepeat = () => (
   </svg>
 );
 
-// ── PDF GENERATOR — cattura la card visiva reale ──────────────────────────
-async function generateCardPDF(campaign, tabColor, onToast) {
+// ── PDF GENERATOR — apre la card in nuova scheda e lancia la stampa ───────
+function generateCardPDF(campaign, tabColor, onToast) {
   if (campaign.status === 'arrivo') {
     onToast('📎 PDF non ancora disponibile — campagna in arrivo');
     return;
   }
 
-  onToast('⏳ Generazione PDF…');
+  const s = { attiva:{label:'Attiva',color:'#4ade80'}, scadenza:{label:'Scadenza',color:'#60a5fa'} }[campaign.status]
+         || { label:'In arrivo', color:'#fbbf24' };
 
-  // Pre-fetch image as blob → same-origin URL → no CORS issues with html2canvas
-  let blobUrl = campaign.img;
-  if (campaign.img) {
-    try {
-      const resp = await fetch(campaign.img, { mode: 'cors' });
-      const blob = await resp.blob();
-      blobUrl = URL.createObjectURL(blob);
-    } catch(_) { /* use original URL as fallback */ }
+  const html = `<!DOCTYPE html>
+<html lang="it"><head>
+<meta charset="UTF-8">
+<title>${campaign.title} — Campagne Commerciali 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#0d1b2e;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:40px 20px}
+  .card{width:400px;background:#152540;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+  .bar{height:4px;background:${tabColor}}
+  .img{width:100%;height:160px;object-fit:cover;display:block}
+  .sconto-bar{padding:8px 24px;background:linear-gradient(90deg,rgba(245,158,11,.13),rgba(239,68,68,.08));border-bottom:1px solid rgba(245,158,11,.25);font-size:12px;color:#fbbf24;display:flex;align-items:center;gap:6px}
+  .body{padding:22px 24px 24px}
+  .header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+  .title{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:#f8f9fc;line-height:1.25;flex:1}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;background:${s.color}22;color:${s.color};white-space:nowrap;flex-shrink:0}
+  .dot{width:6px;height:6px;border-radius:50%;background:${s.color}}
+  .desc{font-size:13px;color:#6b7a99;line-height:1.6;margin-bottom:14px}
+  .meta{font-size:12px;color:#60a5fa;display:flex;align-items:center;gap:6px}
+  .footer{font-size:10px;color:rgba(107,122,153,.7);text-align:center;letter-spacing:.04em}
+  @media print{
+    html,body{background:#0d1b2e}
+    .hint{display:none}
+    .wrap{padding:20px}
   }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="card">
+    <div class="bar"></div>
+    ${campaign.img ? `<img class="img" src="${campaign.img}">` : ''}
+    ${campaign.sconto ? `<div class="sconto-bar">⏰ ${campaign.sconto.detail}</div>` : ''}
+    <div class="body">
+      <div class="header">
+        <div class="title">${campaign.title}</div>
+        <div class="badge"><div class="dot"></div>${s.label}</div>
+      </div>
+      <div class="desc">${campaign.desc || ''}</div>
+      ${campaign.expiry ? `<div class="meta">📅 Scade il ${campaign.expiry}</div>` : campaign.freq ? `<div class="meta">🔁 ${campaign.freq}</div>` : ''}
+    </div>
+  </div>
+  <div class="footer hint">Allianz — Campagne Commerciali 2026 &nbsp;·&nbsp; ${new Date().toLocaleDateString('it-IT')}</div>
+</div>
+<script>
+  window.onload = function(){
+    setTimeout(function(){ window.print(); }, 400);
+  };
+<\/script>
+</body></html>`;
 
-  const campaignForRender = { ...campaign, img: blobUrl };
-
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;pointer-events:none;';
-  document.body.appendChild(wrap);
-
-  const tmpRoot = ReactDOM.createRoot(wrap);
-  tmpRoot.render(
-    React.createElement(CampaignCard, {
-      campaign: campaignForRender, tabColor, showDesc: true, onToast: () => {}, forPdf: true
-    })
-  );
-
-  // Wait for React to commit, then wait for the img to load
-  await new Promise(r => setTimeout(r, 150));
-  const imgs = Array.from(wrap.querySelectorAll('img'));
-  await Promise.all(imgs.map(img => new Promise(r => {
-    if (img.complete && img.naturalHeight !== 0) return r();
-    img.onload = r; img.onerror = r; setTimeout(r, 4000);
-  })));
-
-  try {
-    const canvas = await html2canvas(wrap.firstChild, {
-      useCORS: false,
-      allowTaint: false,
-      backgroundColor: '#152540',
-      scale: 2,
-      logging: false,
-    });
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-    // Navy background
-    doc.setFillColor(13, 27, 46);
-    doc.rect(0, 0, 210, 297, 'F');
-
-    // Card centered with shadow
-    const imgData = canvas.toDataURL('image/jpeg', 0.93);
-    const cardW = 168;
-    const cardH = cardW * canvas.height / canvas.width;
-    const x = (210 - cardW) / 2;
-    const y = Math.max(18, (297 - cardH) / 2);
-
-    doc.setFillColor(5, 12, 24);
-    doc.roundedRect(x + 2.5, y + 3, cardW, cardH, 5, 5, 'F');
-    doc.addImage(imgData, 'JPEG', x, y, cardW, cardH);
-
-    // Footer
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(107, 122, 153);
-    doc.text('Allianz — Campagne Commerciali 2026', 15, 290);
-    doc.text(new Date().toLocaleDateString('it-IT'), 195, 290, { align: 'right' });
-
-    doc.save(`${campaign.title.replace(/[^a-zA-Z0-9]/g, '_')}_2026.pdf`);
-    onToast(`✅ PDF scaricato — ${campaign.title}`);
-  } catch(e) {
-    console.error('PDF error:', e);
-    onToast('❌ Errore: ' + (e.message || 'generazione fallita'));
-  } finally {
-    tmpRoot.unmount();
-    document.body.removeChild(wrap);
-    if (blobUrl !== campaign.img) URL.revokeObjectURL(blobUrl);
-  }
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (!win) onToast('⚠️ Abilita i popup per scaricare il PDF');
+  else      onToast('🖨️ Seleziona "Salva come PDF" nella finestra di stampa');
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
 // ── MAPPA VIEW ────────────────────────────────────────────────────────────
@@ -1334,7 +1316,7 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
 }
 
 // ── CARD ───────────────────────────────────────────────────────────────────
-function CampaignCard({ campaign, tabColor, showDesc, cardStyle, onToast, forPdf = false }) {
+function CampaignCard({ campaign, tabColor, showDesc, cardStyle, onToast }) {
   const s = STATUS[campaign.status];
 
   const handleDownload = () => { generateCardPDF(campaign, tabColor, onToast); };
@@ -1404,16 +1386,14 @@ function CampaignCard({ campaign, tabColor, showDesc, cardStyle, onToast, forPdf
           )}
         </div>
 
-        {!forPdf && (
-          <div className="card-actions">
-            <button className="btn btn-download" onClick={handleDownload}>
-              <IconDownload /> Scarica PDF
-            </button>
-            <button className="btn btn-whatsapp" onClick={handleWhatsApp}>
-              <IconWhatsApp /> Condividi
-            </button>
-          </div>
-        )}
+        <div className="card-actions">
+          <button className="btn btn-download" onClick={handleDownload}>
+            <IconDownload /> Scarica PDF
+          </button>
+          <button className="btn btn-whatsapp" onClick={handleWhatsApp}>
+            <IconWhatsApp /> Condividi
+          </button>
+        </div>
       </div>
     </div>
   );
