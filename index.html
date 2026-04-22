@@ -478,12 +478,12 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 // ── DATA ───────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'motor',        label: 'Motor',        color: '#3b82f6', emoji: '🔵' },
-  { id: 'rami',         label: 'Rami Vari',    color: '#8b5cf6', emoji: '🟣' },
-  { id: 'salute',       label: 'Salute',       color: '#06b6d4', emoji: '🔷' },
-  { id: 'protection',   label: 'Protection',   color: '#ef4444', emoji: '🔴' },
-  { id: 'investimento', label: 'Investimento', color: '#22c55e', emoji: '🟢' },
-  { id: 'altro',        label: 'Altro',        color: '#94a3b8', emoji: '⚫' },
+  { id: 'motor',    label: 'Motor',                color: '#3b82f6', emoji: '🔵' },
+  { id: 'salute',   label: 'Salute',               color: '#06b6d4', emoji: '🔷' },
+  { id: 'casa',     label: 'Casa',                 color: '#8b5cf6', emoji: '🏠' },
+  { id: 'impresa',  label: 'Impresa',              color: '#22c55e', emoji: '🏢' },
+  { id: 'vita',     label: 'Vita',                 color: '#ef4444', emoji: '🔴' },
+  { id: 'clienti',  label: 'Clienti & Com.',       color: '#f59e0b', emoji: '👥' },
 ];
 
 const STATUS = {
@@ -495,148 +495,232 @@ const STATUS = {
 const CAMPAIGNS = {
   motor: [
     {
-      id: 'm1', title: 'RCA → ARD',
-      status: 'attiva', freq: 'Mensile',
-      desc: 'Proponi la copertura ARD ai clienti con sola polizza RCA. Campagna mensile ricorrente.',
+      id: 'm1', title: 'Cross selling Motor – Lithium',
+      status: 'scadenza', expiry: '30 aprile 2026', freq: 'GEN–APR 2026',
+      desc: 'Proponi le coperture specifiche per veicoli elettrici e ibridi. Garanzie dedicate alle batterie al litio per il portafoglio motor.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'm2', title: 'Infortuni da circolazione –30%',
+      status: 'scadenza', expiry: '30 aprile 2025', freq: 'MAR–APR 2025',
+      desc: 'Sconto del 30% sulle garanzie infortuni da circolazione per i clienti con polizza auto attiva.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'm3', title: 'Proponi ARD – Clienti con sola RCA',
+      status: 'scadenza', expiry: '30 aprile 2026', freq: 'Aprile 2026',
+      desc: 'Proponi la copertura ARD ai clienti con sola polizza RCA. Campagna del mese di aprile.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'm2', title: 'RCA → Imprevisti e Tutela',
-      status: 'attiva', freq: 'Mensile',
-      desc: 'Clienti con solo RCA: proponi garanzie accessorie per imprevisti stradali e tutela legale.',
+      id: 'm4', title: 'Proponi ARD – Imprevisti e Tutela',
+      status: 'scadenza', expiry: '30 aprile 2026', freq: 'Aprile 2026',
+      desc: 'Clienti con solo RCA: proponi garanzie accessorie per imprevisti stradali e tutela legale. Aprile 2026.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'm3', title: 'Cross-selling Motor',
-      status: 'attiva', freq: null,
-      desc: 'Campagna dedicata al cross-selling ramo motor con offerte personalizzate sul portafoglio clienti.',
-      pdf: '#',
+      id: 'm5', title: 'Proponi ARD – Clienti con sola RCA',
+      status: 'arrivo', expiry: '31 maggio 2026', freq: 'Maggio 2026',
+      desc: 'Proponi la copertura ARD ai clienti con sola polizza RCA. Campagna del mese di maggio.',
+      pdf: null,
       img: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'm4', title: 'Cross-selling Lithium',
-      status: 'arrivo', freq: null,
-      desc: 'Coperture dedicate a veicoli elettrici e ibridi, con garanzie specifiche per le batterie al litio.',
+      id: 'm6', title: 'Proponi ARD – Imprevisti e Tutela',
+      status: 'arrivo', expiry: '31 maggio 2026', freq: 'Maggio 2026',
+      desc: 'Clienti con solo RCA: proponi garanzie accessorie per imprevisti stradali e tutela legale. Maggio 2026.',
       pdf: null,
-      img: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=720&h=320&fit=crop&auto=format&q=80'
+      img: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=720&h=320&fit=crop&auto=format&q=80'
     },
   ],
-  rami: [
+  salute: [
     {
-      id: 'r1', title: 'Ultra Casa e Patrimonio',
-      status: 'scadenza', expiry: '15 luglio 2026', freq: '1° semestre 2026',
-      desc: 'Polizza casa completa con copertura del patrimonio inclusa. Valida per tutto il primo semestre.',
+      id: 's1', title: 'Clienti Vita – Proposta Salute',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Estendi la protezione dei clienti vita con un piano salute dedicato e condizioni agevolate.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's2', title: 'Cross-Sell Infortuni',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Cross-selling su polizze infortuni: amplia la copertura dei clienti con garanzie accessorie.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's3', title: 'Cross-Sell Malattia',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Cross-selling focalizzato sulle polizze malattia grave per il portafoglio clienti esistente.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's4', title: 'Promo AZUltra Salute',
+      status: 'scadenza', expiry: '31 marzo 2026', freq: 'FEB–MAR 2026',
+      desc: 'Piano sanitario completo: spese mediche, ricoveri e specialistica in un\'unica soluzione promozionale.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's5', title: 'Promo Salute 1',
+      status: 'attiva', freq: null,
+      desc: 'Campagna promozionale salute: offerta dedicata al portafoglio clienti con condizioni vantaggiose.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's6', title: 'Promo Salute 2',
+      status: 'attiva', freq: null,
+      desc: 'Seconda campagna promozionale salute con proposte personalizzate per diversi profili di cliente.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's7', title: 'Evoluzione di Portafoglio Infortuni',
+      status: 'attiva', freq: null,
+      desc: 'Revisione e aggiornamento delle coperture infortuni nel portafoglio: adegua i massimali e le garanzie.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+  ],
+  casa: [
+    {
+      id: 'c1', title: 'Allianz Ultra Casa e Patrimonio',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Polizza casa completa con copertura del patrimonio inclusa. Valida per tutto il primo semestre 2026.',
       pdf: '#',
       sconto: { label: 'Sconto attivo', detail: 'Promozione valida fino al 30 giugno 2026', color: '#f59e0b' },
       img: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'r2', title: 'Casa per Clienti VITA',
-      status: 'arrivo', freq: null,
+      id: 'c2', title: 'Allianz Ultra Salute',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Proposta salute abbinata alla polizza casa: protezione completa per la famiglia e l\'abitazione.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'c3', title: 'Clienti Vita – Proposta Casa',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
       desc: 'Cross-selling dedicato: proponi la polizza casa ai clienti già titolari di una polizza vita.',
-      pdf: null,
+      pdf: '#',
       img: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'r3', title: 'Ultra Impresa',
-      status: 'scadenza', expiry: '15 luglio 2026', freq: '1° semestre 2026',
+      id: 'c4', title: 'Evoluzione di Portafoglio Casa',
+      status: 'attiva', freq: null,
+      desc: 'Revisione delle polizze casa esistenti: aggiorna i massimali e proponi estensioni di copertura.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1448630360428-65456885c650?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'c5', title: 'Evoluzione di Portafoglio Abitazione',
+      status: 'attiva', freq: null,
+      desc: 'Evoluzione del portafoglio abitazione: individua i clienti con coperture da aggiornare e proponi soluzioni adeguate.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+  ],
+  impresa: [
+    {
+      id: 'i1', title: 'Allianz Ultra Impresa',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
       desc: 'Polizza multirischio per imprese con coperture personalizzabili su misura del cliente business.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'r4', title: 'CAT.NAT Prima 2026',
-      status: 'arrivo', freq: null,
-      desc: 'Nuova campagna per le coperture catastrofali: terremoto, alluvione e altri eventi naturali.',
-      pdf: null,
+      id: 'i2', title: 'CAT NAT Impresa – Clienti CON copertura',
+      status: 'attiva', freq: null,
+      desc: 'Clienti già coperti da CAT NAT: revisione e adeguamento dei massimali per le coperture catastrofali.',
+      pdf: '#',
       img: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'r5', title: 'Sinistri WOW 2×',
+      id: 'i3', title: 'CAT NAT Impresa – Clienti SENZA copertura',
       status: 'attiva', freq: null,
-      desc: 'Incentivi raddoppiati per la gestione sinistri: liquidazioni rapide premiano con punteggi doppi.',
+      desc: 'Clienti esposti ma non coperti: proponi la copertura catastrofale per terremoto, alluvione e altri eventi naturali.',
       pdf: '#',
-      img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-  ],
-  salute: [
-    {
-      id: 's1', title: 'AZUltra Salute',
-      status: 'scadenza', expiry: '15 luglio 2026', freq: '1° semestre 2026',
-      desc: 'Piano sanitario completo: spese mediche, ricoveri e specialistica in un\'unica soluzione.',
-      pdf: '#',
-      img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=720&h=320&fit=crop&auto=format&q=80'
+      img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 's2', title: 'Salute per Clienti VITA',
-      status: 'arrivo', freq: null,
-      desc: 'Estendi la protezione dei clienti vita con un piano salute dedicato e condizioni agevolate.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 's3', title: 'Cross-selling Malattia',
-      status: 'arrivo', freq: null,
-      desc: 'Cross-selling focalizzato sulle polizze malattia grave per il portafoglio clienti esistente.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 's4', title: 'Cross-selling Infortuni',
-      status: 'arrivo', freq: null,
-      desc: 'Cross-selling su polizze infortuni: amplia la copertura dei clienti con garanzie accessorie.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-  ],
-  protection: [
-    {
-      id: 'p1', title: 'Adegua TCM',
-      status: 'attiva', freq: null,
-      desc: 'Rivaluta e aggiorna i capitali sulla Temporanea Caso Morte: adegua la copertura alle esigenze attuali.',
-      pdf: '#',
-      img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 'p2', title: 'Cross-selling LOVIA',
-      status: 'arrivo', freq: null,
-      desc: 'Soluzione modulare LOVIA per la protezione del nucleo familiare con coperture flessibili.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 'p3', title: 'Allianz Longevity Care',
-      status: 'arrivo', freq: null,
-      desc: 'Nuova soluzione per la non autosufficienza e la longevità: protezione per le fasi più delicate della vita.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-  ],
-  investimento: [
-    {
-      id: 'i1', title: 'VITARIV 2×',
-      status: 'attiva', freq: null,
-      desc: 'Incentivi doppi per i consulenti che collocano VITARIV: massimizza i risultati con questa campagna attiva.',
-      pdf: '#',
-      img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-  ],
-  altro: [
-    {
-      id: 'a1', title: 'Mondo Impresa Clienti+',
+      id: 'i4', title: 'Mondo Impresa Clienti+',
       status: 'attiva', freq: null,
       desc: 'Pacchetti integrati per il segmento imprese: soluzioni complete per i clienti business del portafoglio.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'a2', title: 'Google Business Profile',
+      id: 'i5', title: 'Evoluzione di Portafoglio PMI',
+      status: 'attiva', freq: null,
+      desc: 'Analisi e aggiornamento delle coperture per le piccole e medie imprese: individua gap e proponi soluzioni.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+  ],
+  vita: [
+    {
+      id: 'v1', title: 'Adegua TCM',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Rivaluta e aggiorna i capitali sulla Temporanea Caso Morte: adegua la copertura alle esigenze attuali del cliente.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'v2', title: 'Cross-Sell LOVIA',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Soluzione modulare LOVIA per la protezione del nucleo familiare con coperture flessibili e personalizzabili.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'v3', title: 'Proponi AZ Longevity Care',
+      status: 'scadenza', expiry: '31 dicembre 2025', freq: '1ª wave 2025',
+      desc: 'Soluzione per la non autosufficienza e la longevità: protezione dedicata alle fasi più delicate della vita.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'v4', title: '100% Vitariv – Clienti Unit',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Incentivi al 100% per il collocamento di VITARIV ai clienti con prodotti unit linked. Massimizza i risultati.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'v5', title: '100% Vitariv – Clienti Vitariv',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Campagna dedicata ai clienti già titolari di VITARIV: proponi il rinnovo o l\'incremento del capitale investito.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+  ],
+  clienti: [
+    {
+      id: 'cl1', title: 'Google Business Profile',
       status: 'arrivo', freq: null,
-      desc: 'Ottimizza la presenza digitale dell\'agenzia su Google: visibilità locale e reputazione online.',
+      desc: 'Ottimizza la presenza digitale dell\'agenzia su Google: visibilità locale, reputazione online e recensioni.',
       pdf: null,
       img: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'cl2', title: 'Mondo Impresa Clienti+ – dip 60+',
+      status: 'attiva', freq: null,
+      desc: 'Proposta dedicata ai dipendenti con 60 o più anni: soluzioni previdenziali e di protezione su misura.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1576765608866-5b51046452be?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'cl3', title: 'Mondo Impresa Clienti+ – dip max 59',
+      status: 'attiva', freq: null,
+      desc: 'Proposta dedicata ai dipendenti fino a 59 anni: pacchetti welfare e protezione integrati per il segmento business.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=720&h=320&fit=crop&auto=format&q=80'
     },
   ],
 };
@@ -1151,7 +1235,7 @@ function MappaView({ onToast }) {
             <div style={{ height: 3, background: tab.color, position: 'relative', zIndex: 2 }}/>
             <div className="mappa-tile-header">
               <div className="mappa-tile-icon" style={{ background: tab.color + '20' }}>
-                {{ motor:'🚗', rami:'🏠', salute:'🏥', protection:'🛡️', investimento:'📈', altro:'💼' }[tab.id]}
+                {{ motor:'🚗', salute:'🏥', casa:'🏠', impresa:'🏢', vita:'🛡️', clienti:'👥' }[tab.id]}
               </div>
               <div className="mappa-tile-name">{tab.label}</div>
               <div className="mappa-tile-count" style={{ background: tab.color + '25', color: tab.color }}>
