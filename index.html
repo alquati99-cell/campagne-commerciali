@@ -1164,16 +1164,198 @@ function generateCardPDF(campaign, tabColor, onToast) {
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
+// ── WHATSAPP CARD SHARE ───────────────────────────────────────────────────
+function hexToRgbArr(hex) {
+  return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+}
+
+function wrapText(ctx, text, maxW, maxLines = 99) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line);
+      if (lines.length >= maxLines) { lines[lines.length-1] += '…'; return lines; }
+      line = w;
+    } else { line = test; }
+  }
+  if (line && lines.length < maxLines) lines.push(line);
+  return lines;
+}
+
+function roundedRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+async function generateShareCard(campaign, tabColor) {
+  const W = 1080, H = 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const [tr, tg, tb] = hexToRgbArr(tabColor);
+
+  await document.fonts.ready;
+
+  // Navy background
+  ctx.fillStyle = '#0d1b2e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Radial glow corner
+  const grd = ctx.createRadialGradient(W*0.85, H*0.1, 0, W*0.85, H*0.1, W*0.7);
+  grd.addColorStop(0, `rgba(${tr},${tg},${tb},0.18)`);
+  grd.addColorStop(1, 'transparent');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Card
+  const cx=60, cy=60, cw=W-120, ch=H-120, cr=28;
+  roundedRectPath(ctx, cx, cy, cw, ch, cr);
+  ctx.fillStyle = '#152540';
+  ctx.fill();
+
+  // Top accent bar
+  ctx.fillStyle = tabColor;
+  ctx.fillRect(cx+cr, cy, cw-cr*2, 7);
+  ctx.beginPath(); ctx.arc(cx+cr, cy+cr, cr, Math.PI, 1.5*Math.PI); ctx.lineTo(cx+cr, cy+7); ctx.lineTo(cx+cr, cy); ctx.fillStyle=tabColor; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+cw-cr, cy+cr, cr, 1.5*Math.PI, 2*Math.PI); ctx.lineTo(cx+cw, cy+7); ctx.lineTo(cx+cw-cr, cy+7); ctx.fillStyle=tabColor; ctx.fill();
+  // Simpler: just fill the top bar fully
+  roundedRectPath(ctx, cx, cy, cw, 7, cr);
+  ctx.fillStyle = tabColor; ctx.fill();
+
+  // Photo
+  const photoH = 390;
+  try {
+    const resp = await fetch(campaign.img, { mode: 'cors' });
+    const blob = await resp.blob();
+    const burl = URL.createObjectURL(blob);
+    const img = await new Promise((res, rej) => { const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=burl; });
+    ctx.save();
+    roundedRectPath(ctx, cx, cy+7, cw, photoH);
+    ctx.clip();
+    const sc = Math.max(cw/img.width, photoH/img.height);
+    const sw=img.width*sc, sh=img.height*sc;
+    ctx.drawImage(img, cx+(cw-sw)/2, cy+7+(photoH-sh)/2, sw, sh);
+    // fade to card bg at bottom
+    const fadeGrd = ctx.createLinearGradient(0, cy+7, 0, cy+7+photoH);
+    fadeGrd.addColorStop(0.45, 'transparent');
+    fadeGrd.addColorStop(1, '#152540');
+    ctx.fillStyle = fadeGrd; ctx.fillRect(cx, cy+7, cw, photoH);
+    ctx.restore();
+    URL.revokeObjectURL(burl);
+  } catch(_) {
+    roundedRectPath(ctx, cx, cy+7, cw, photoH);
+    ctx.fillStyle = `rgba(${tr},${tg},${tb},0.18)`; ctx.fill();
+  }
+
+  let ty = cy + 7 + photoH + 44;
+
+  // Status badge
+  const statusMap = {
+    attiva:   ['#4ade80','rgba(34,197,94,0.18)','✅  Attiva'],
+    arrivo:   ['#fbbf24','rgba(245,158,11,0.18)','🔜  In arrivo'],
+    scadenza: ['#60a5fa','rgba(59,130,246,0.18)','📅  Scadenza'],
+  };
+  const [sc2, sbg, slabel] = statusMap[campaign.status] || statusMap.attiva;
+  ctx.font = '500 28px "DM Sans", sans-serif';
+  const btw = ctx.measureText(slabel).width + 56;
+  roundedRectPath(ctx, cx+44, ty, btw, 50, 25);
+  ctx.fillStyle = sbg; ctx.fill();
+  ctx.fillStyle = sc2; ctx.textBaseline='middle'; ctx.fillText(slabel, cx+44+28, ty+25);
+  ty += 72;
+
+  // Title
+  ctx.fillStyle = '#f8f9fc';
+  ctx.font = 'bold 58px "Outfit", sans-serif';
+  ctx.textBaseline = 'top';
+  const titleLines = wrapText(ctx, campaign.title, cw-88, 2);
+  titleLines.forEach(line => { ctx.fillText(line, cx+44, ty); ty += 70; });
+  ty += 10;
+
+  // Description (max 2 lines)
+  if (campaign.desc) {
+    ctx.fillStyle = 'rgba(107,122,153,0.9)';
+    ctx.font = '400 30px "DM Sans", sans-serif';
+    wrapText(ctx, campaign.desc, cw-88, 2).forEach(line => { ctx.fillText(line, cx+44, ty); ty += 42; });
+    ty += 12;
+  }
+
+  // Expiry
+  if (campaign.expiry) {
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = '500 28px "DM Sans", sans-serif';
+    ctx.fillText('📅  Scade il ' + campaign.expiry, cx+44, ty);
+    ty += 46;
+  } else if (campaign.freq) {
+    ctx.fillStyle = 'rgba(107,122,153,0.8)';
+    ctx.font = '500 28px "DM Sans", sans-serif';
+    ctx.fillText('🔁  ' + campaign.freq, cx+44, ty);
+    ty += 46;
+  }
+
+  // Sconto
+  if (campaign.sconto) {
+    ty += 8;
+    roundedRectPath(ctx, cx+44, ty, cw-88, 54, 12);
+    ctx.fillStyle = 'rgba(245,158,11,0.15)'; ctx.fill();
+    ctx.fillStyle = '#fbbf24'; ctx.font='600 26px "DM Sans",sans-serif'; ctx.textBaseline='middle';
+    ctx.fillText('🏷️  ' + campaign.sconto.detail, cx+64, ty+27);
+    ctx.textBaseline='top'; ty += 72;
+  }
+
+  // Footer bar
+  const fy = cy+ch-58;
+  ctx.fillStyle = `rgba(${tr},${tg},${tb},0.1)`;
+  ctx.fillRect(cx, fy, cw, 58);
+  ctx.fillStyle = `rgba(${tr},${tg},${tb},0.7)`;
+  ctx.font = '500 24px "DM Sans",sans-serif'; ctx.textBaseline='middle';
+  ctx.fillText('Campagne Commerciali 2026', cx+36, fy+29);
+  ctx.textAlign='right';
+  ctx.fillText(new Date().toLocaleDateString('it-IT'), cx+cw-36, fy+29);
+  ctx.textAlign='left';
+
+  return new Promise(res => canvas.toBlob(res, 'image/png'));
+}
+
+async function handleWhatsAppShare(campaign, tabColor, onToast) {
+  onToast('⏳ Preparazione immagine…');
+  try {
+    const blob = await generateShareCard(campaign, tabColor);
+    const fileName = campaign.title.replace(/[^a-zA-Z0-9]/g,'_') + '.png';
+    const file = new File([blob], fileName, { type: 'image/png' });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: campaign.title });
+      onToast('✅ Immagine condivisa!');
+    } else {
+      // Desktop: scarica immagine + apri WhatsApp Web
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href=url; a.download=fileName; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 8000);
+      const txt = encodeURIComponent(`*${campaign.title}*\n${campaign.status==='attiva'?'✅ Attiva':campaign.status==='arrivo'?'🔜 In arrivo':'📅 Scade il '+campaign.expiry}\n\nCampagne Commerciali 2026`);
+      setTimeout(() => window.open(`https://wa.me/?text=${txt}`, '_blank'), 800);
+      onToast('📥 Immagine salvata — WhatsApp in apertura');
+    }
+  } catch(e) {
+    if (e.name !== 'AbortError') onToast('❌ ' + (e.message || 'Errore condivisione'));
+  }
+}
+
 // ── MAPPA VIEW ────────────────────────────────────────────────────────────
 function MappaView({ onToast }) {
   const [openTile, setOpenTile] = React.useState(null);
   const isMobile = window.innerWidth <= 640;
 
   const handleDownload = (c, tabColor) => { generateCardPDF(c, tabColor, onToast); };
-  const handleWhatsApp = (c) => {
-    const text = encodeURIComponent(`Campagna: *${c.title}*\n${c.status === 'attiva' ? '✅ Attiva' : '🔜 In arrivo'}${c.expiry ? `\nScadenza: ${c.expiry}` : ''}${c.sconto ? `\n🏷️ ${c.sconto.detail}` : ''}\n\nCondiviso da Campagne Commerciali 2026`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  };
+  const handleWhatsApp = (c, tabColor) => { handleWhatsAppShare(c, tabColor, onToast); };
 
   return (
     <div className="mappa-grid">
@@ -1240,7 +1422,7 @@ function MappaView({ onToast }) {
                     <button
                       className="btn btn-whatsapp"
                       style={{ flex: 'none', padding: '5px 9px', fontSize: 11, borderRadius: 7, minWidth: 0, marginLeft: 4 }}
-                      onClick={() => handleWhatsApp(c)}
+                      onClick={() => handleWhatsApp(c, tab.color)}
                       title="Condividi su WhatsApp"
                     >
                       <IconWhatsApp/>
@@ -1363,11 +1545,7 @@ function CampaignCard({ campaign, tabColor, showDesc, cardStyle, onToast }) {
   const s = STATUS[campaign.status];
 
   const handleDownload = () => { generateCardPDF(campaign, tabColor, onToast); };
-
-  const handleWhatsApp = () => {
-    const text = encodeURIComponent(`Campagna: *${campaign.title}*\n${campaign.status === 'attiva' ? '✅ Attiva' : '🔜 In arrivo'}${campaign.expiry ? `\nScadenza: ${campaign.expiry}` : ''}\n\nCondiviso da Campagne Commerciali 2026`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  };
+  const handleWhatsApp = () => { handleWhatsAppShare(campaign, tabColor, onToast); };
 
   return (
     <div className="campaign-card" style={{ animationDelay: `${Math.random() * 0.15}s` }}>
