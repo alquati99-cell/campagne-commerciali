@@ -8,6 +8,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -33,7 +34,7 @@
     --badge-semestrale: #8b5cf6;
   }
 
-  html, body { height: 100%; background: var(--navy); font-family: 'DM Sans', sans-serif; color: var(--white); overflow-x: hidden; }
+  html, body { height: 100%; background: #060e1c; font-family: 'DM Sans', sans-serif; color: var(--white); overflow-x: hidden; }
 
   #root { min-height: 100vh; }
 
@@ -43,6 +44,45 @@
     position: fixed; inset: 0; z-index: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
     pointer-events: none;
+  }
+
+  /* Dot grid */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+  }
+
+  /* Animated gradient orbs */
+  .bg-orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .bg-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(72px);
+    animation: orbDrift ease-in-out infinite;
+  }
+  .bg-orb-1 {
+    width: 700px; height: 600px; top: -260px; left: -180px;
+    background: radial-gradient(ellipse, rgba(59,130,246,0.18) 0%, transparent 70%);
+    animation-duration: 28s;
+  }
+  .bg-orb-2 {
+    width: 600px; height: 700px; bottom: -220px; right: -160px;
+    background: radial-gradient(ellipse, rgba(139,92,246,0.14) 0%, transparent 70%);
+    animation-duration: 34s; animation-delay: -12s;
+  }
+  .bg-orb-3 {
+    width: 500px; height: 450px; top: 45%; left: 50%;
+    margin: -225px 0 0 -250px;
+    background: radial-gradient(ellipse, rgba(6,182,212,0.09) 0%, transparent 70%);
+    animation-duration: 22s; animation-delay: -7s;
+  }
+  @keyframes orbDrift {
+    0%, 100% { transform: translate(0px, 0px) scale(1); }
+    25%  { transform: translate(22px, -18px) scale(1.04); }
+    50%  { transform: translate(-14px, 24px) scale(0.96); }
+    75%  { transform: translate(18px, 12px) scale(1.02); }
   }
 
   .app-wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 0 32px 80px; }
@@ -412,8 +452,101 @@
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     z-index: 200; pointer-events: none;
     animation: toastIn 0.2s ease;
+    white-space: nowrap;
   }
   @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+  /* ── MOBILE ─────────────────────────────────────────────── */
+  @media (max-width: 640px) {
+    .app-wrap { padding: 0 16px 60px; }
+
+    .header { padding: 28px 0 24px; flex-wrap: wrap; gap: 8px; }
+    .header-year { font-size: 52px; }
+
+    .tabs-bar {
+      gap: 2px; padding: 4px;
+      overflow-x: auto; flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .tabs-bar::-webkit-scrollbar { display: none; }
+    .tab-btn { flex: 0 0 auto; min-width: 80px; padding: 10px 12px; font-size: 13px; }
+    .tab-count { display: none; }
+
+    .view-toggle-btn .toggle-label { display: none; }
+
+    .carousel-wrap { height: 480px; perspective: 800px; }
+    .carousel-item { width: min(88vw, 360px); }
+    .campaign-card { height: 460px; }
+
+    .carousel-nav { gap: 10px; margin-top: 16px; }
+
+
+    /* Mappa: tap-to-open */
+    .mappa-tile { cursor: pointer; }
+    .mappa-tile .mappa-campaigns { max-height: 0; opacity: 0; padding: 0 16px; }
+    .mappa-tile.mobile-open .mappa-campaigns {
+      max-height: 800px !important;
+      opacity: 1 !important;
+      padding: 0 16px 16px !important;
+    }
+    .mappa-tile.mobile-open .mappa-tile-bg { opacity: 1; }
+    .mappa-tile.mobile-open .mappa-divider { opacity: 1; }
+    .mappa-tile-header { padding: 20px 16px 14px; }
+    .mappa-grid { gap: 12px; }
+    .mappa-tile-name { font-size: 16px; }
+  }
+
+  @media (max-width: 400px) {
+    .carousel-item { width: 92vw; }
+    .campaign-card { height: auto; min-height: 440px; }
+  }
+
+  /* ── CARD ANIMATIONS ──────────────────────────────────────────────────── */
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes cardGlow {
+    0%, 100% { box-shadow: 0 8px 32px -8px rgba(0,0,0,0.5); }
+    50%       { box-shadow: 0 16px 48px -8px var(--card-glow, rgba(59,130,246,0.35)), 0 0 0 1px rgba(255,255,255,0.07); }
+  }
+  @keyframes barShimmer {
+    0%   { transform: translateX(-100%); }
+    60%, 100% { transform: translateX(200%); }
+  }
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); }
+    50%       { box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+  }
+
+  .campaign-card {
+    animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    transition: box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+  .campaign-card--active {
+    animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both,
+               cardGlow 3.5s ease-in-out 0.6s infinite;
+    border-color: rgba(255,255,255,0.12) !important;
+  }
+  .campaign-card:hover {
+    box-shadow: 0 20px 56px -10px var(--card-glow, rgba(59,130,246,0.3)),
+                0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  /* Top bar shimmer */
+  .card-top-bar { position: relative; overflow: hidden; }
+  .card-top-bar::after {
+    content: '';
+    position: absolute; top: 0; bottom: 0; left: 0; width: 60%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    animation: barShimmer 3.8s ease-in-out infinite;
+  }
+
+  /* Attiva badge pulse */
+  .badge-attiva .badge-dot {
+    animation: dotPulse 2.2s ease-in-out infinite;
+  }
 </style>
 </head>
 <body>
@@ -430,12 +563,12 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 // ── DATA ───────────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'motor',        label: 'Motor',        color: '#3b82f6', emoji: '🔵' },
-  { id: 'rami',         label: 'Rami Vari',    color: '#8b5cf6', emoji: '🟣' },
-  { id: 'salute',       label: 'Salute',       color: '#06b6d4', emoji: '🔷' },
-  { id: 'protection',   label: 'Protection',   color: '#ef4444', emoji: '🔴' },
-  { id: 'investimento', label: 'Investimento', color: '#22c55e', emoji: '🟢' },
-  { id: 'altro',        label: 'Altro',        color: '#94a3b8', emoji: '⚫' },
+  { id: 'motor',    label: 'Motor',                color: '#3b82f6', emoji: '🔵' },
+  { id: 'salute',   label: 'Salute',               color: '#06b6d4', emoji: '🔷' },
+  { id: 'casa',     label: 'Casa',                 color: '#8b5cf6', emoji: '🏠' },
+  { id: 'impresa',  label: 'Impresa',              color: '#22c55e', emoji: '🏢' },
+  { id: 'vita',     label: 'Vita',                 color: '#ef4444', emoji: '🔴' },
+  { id: 'clienti',  label: 'Clienti & Com.',       color: '#f59e0b', emoji: '👥' },
 ];
 
 const STATUS = {
@@ -447,148 +580,191 @@ const STATUS = {
 const CAMPAIGNS = {
   motor: [
     {
-      id: 'm1', title: 'RCA → ARD',
-      status: 'attiva', freq: 'Mensile',
-      desc: 'Proponi la copertura ARD ai clienti con sola polizza RCA. Campagna mensile ricorrente.',
+      id: 'm1', title: 'Cross selling Motor – Lithium',
+      status: 'attiva', expiry: '31 agosto 2026', freq: 'GEN–AGO 2026',
+      desc: 'Proponi le coperture specifiche per veicoli elettrici e ibridi. Garanzie dedicate alle batterie al litio per il portafoglio motor.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'm2', title: 'Infortuni da circolazione –30%',
+      status: 'attiva', expiry: '30 giugno 2026', freq: 'MAG–GIU 2026',
+      desc: 'Sconto del 30% sulle garanzie infortuni da circolazione per i clienti con polizza auto attiva.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'm5', title: 'Proponi ARD – Clienti con sola RCA',
+      status: 'attiva', expiry: '31 maggio 2026', freq: 'Maggio 2026',
+      desc: 'Proponi la copertura ARD ai clienti con sola polizza RCA. Campagna del mese di maggio.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'm2', title: 'RCA → Imprevisti e Tutela',
-      status: 'attiva', freq: 'Mensile',
-      desc: 'Clienti con solo RCA: proponi garanzie accessorie per imprevisti stradali e tutela legale.',
+      id: 'm6', title: 'Proponi ARD – Imprevisti e Tutela',
+      status: 'attiva', expiry: '31 maggio 2026', freq: 'Maggio 2026',
+      desc: 'Clienti con solo RCA: proponi garanzie accessorie per imprevisti stradali e tutela legale. Maggio 2026.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 'm3', title: 'Cross-selling Motor',
-      status: 'attiva', freq: null,
-      desc: 'Campagna dedicata al cross-selling ramo motor con offerte personalizzate sul portafoglio clienti.',
-      pdf: '#',
-      img: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 'm4', title: 'Cross-selling Lithium',
-      status: 'arrivo', freq: null,
-      desc: 'Coperture dedicate a veicoli elettrici e ibridi, con garanzie specifiche per le batterie al litio.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-  ],
-  rami: [
-    {
-      id: 'r1', title: 'Ultra Casa e Patrimonio',
-      status: 'scadenza', expiry: '15 luglio 2026', freq: '1° semestre 2026',
-      desc: 'Polizza casa completa con copertura del patrimonio inclusa. Valida per tutto il primo semestre.',
-      pdf: '#',
-      sconto: { label: 'Sconto attivo', detail: 'Promozione valida fino al 30 giugno 2026', color: '#f59e0b' },
-      img: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 'r2', title: 'Casa per Clienti VITA',
-      status: 'arrivo', freq: null,
-      desc: 'Cross-selling dedicato: proponi la polizza casa ai clienti già titolari di una polizza vita.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 'r3', title: 'Ultra Impresa',
-      status: 'scadenza', expiry: '15 luglio 2026', freq: '1° semestre 2026',
-      desc: 'Polizza multirischio per imprese con coperture personalizzabili su misura del cliente business.',
-      pdf: '#',
-      img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 'r4', title: 'CAT.NAT Prima 2026',
-      status: 'arrivo', freq: null,
-      desc: 'Nuova campagna per le coperture catastrofali: terremoto, alluvione e altri eventi naturali.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 'r5', title: 'Sinistri WOW 2×',
-      status: 'attiva', freq: null,
-      desc: 'Incentivi raddoppiati per la gestione sinistri: liquidazioni rapide premiano con punteggi doppi.',
-      pdf: '#',
-      img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=720&h=320&fit=crop&auto=format&q=80'
     },
   ],
   salute: [
     {
-      id: 's1', title: 'AZUltra Salute',
-      status: 'scadenza', expiry: '15 luglio 2026', freq: '1° semestre 2026',
-      desc: 'Piano sanitario completo: spese mediche, ricoveri e specialistica in un\'unica soluzione.',
-      pdf: '#',
-      img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=720&h=320&fit=crop&auto=format&q=80'
-    },
-    {
-      id: 's2', title: 'Salute per Clienti VITA',
-      status: 'arrivo', freq: null,
+      id: 's1', title: 'Clienti Vita – Proposta Salute',
+      status: 'scadenza', expiry: '10 luglio 2026', freq: '1° semestre 2026',
       desc: 'Estendi la protezione dei clienti vita con un piano salute dedicato e condizioni agevolate.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=720&h=320&fit=crop&auto=format&q=80'
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 's3', title: 'Cross-selling Malattia',
-      status: 'arrivo', freq: null,
-      desc: 'Cross-selling focalizzato sulle polizze malattia grave per il portafoglio clienti esistente.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=720&h=320&fit=crop&auto=format&q=80'
+      id: 's2', title: 'Cross-Sell Infortuni',
+      status: 'scadenza', expiry: '10 luglio 2026', freq: '1° semestre 2026',
+      desc: 'Amplia la copertura dei clienti con garanzie infortuni: protezione attiva per chi vive uno stile di vita dinamico.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 's4', title: 'Cross-selling Infortuni',
-      status: 'arrivo', freq: null,
-      desc: 'Cross-selling su polizze infortuni: amplia la copertura dei clienti con garanzie accessorie.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=720&h=320&fit=crop&auto=format&q=80'
+      id: 's3', title: 'Cross-Sell Malattia',
+      status: 'scadenza', expiry: '10 luglio 2026', freq: '1° semestre 2026',
+      desc: 'Proponi coperture malattia con un approccio caldo e concreto: protezione pensata per la serenità quotidiana.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1515923019249-6b544314450f?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'c2', title: 'Ultra Salute',
+      status: 'scadenza', expiry: '10 luglio 2026', freq: '1° semestre 2026',
+      desc: 'Piano sanitario completo: spese mediche, ricoveri e specialistica in un\'unica soluzione pensata per il benessere della persona.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's4', title: 'Promo Ultra Salute',
+      status: 'attiva', expiry: '30 giugno 2026', freq: 'fino al 30 giugno 2026',
+      desc: 'Piano sanitario completo in promozione: spese mediche, ricoveri e specialistica in un\'unica soluzione vantaggiosa.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's5', title: 'Rafforza protezione salute – Clienti con infortuni',
+      status: 'attiva', expiry: '30 settembre 2026', freq: null,
+      desc: 'Campagna dedicata ai clienti con polizza infortuni: rafforza la protezione salute con coperture complementari.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 's6', title: 'Rafforza protezione salute – Clienti con configurazioni',
+      status: 'attiva', expiry: '30 settembre 2026', freq: null,
+      desc: 'Campagna per clienti con configurazioni specifiche: proponi soluzioni salute su misura per ampliare la copertura.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1519824145371-296894a0daa9?w=720&h=320&fit=crop&auto=format&q=80'
     },
   ],
-  protection: [
+  casa: [
     {
-      id: 'p1', title: 'Adegua TCM',
-      status: 'attiva', freq: null,
-      desc: 'Rivaluta e aggiorna i capitali sulla Temporanea Caso Morte: adegua la copertura alle esigenze attuali.',
+      id: 'c1', title: 'Ultra Casa e Patrimonio',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Polizza casa completa con copertura del patrimonio inclusa. Protezione per la famiglia e tutto ciò che conta davvero.',
+      pdf: '#',
+      sconto: { label: 'Sconto attivo', detail: 'Promozione valida fino al 30 giugno 2026', color: '#f59e0b' },
+      img: 'https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'c3', title: 'Clienti Vita – Proposta Casa',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Proponi la polizza casa ai clienti già titolari di una polizza vita: protezione completa per la loro famiglia.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+  ],
+  impresa: [
+    {
+      id: 'i1', title: 'Ultra Impresa',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Polizza multirischio per imprese con coperture personalizzabili su misura del cliente business.',
+      pdf: '#',
+      sconto: { label: 'Promo –30%', detail: 'Promozione del 30% valida fino al 31 agosto 2026', color: '#f59e0b' },
+      img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'i2', title: 'CAT NAT Impresa – Clienti CON copertura',
+      status: 'attiva', expiry: '31 dicembre 2026', freq: null,
+      desc: 'Clienti già coperti da CAT NAT: revisione e adeguamento dei massimali per le coperture catastrofali.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'i3', title: 'CAT NAT Impresa – Clienti SENZA copertura',
+      status: 'attiva', expiry: '31 dicembre 2026', freq: null,
+      desc: 'Clienti esposti ma non coperti: proponi la copertura catastrofale per terremoto, alluvione e altri eventi naturali.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+  ],
+  vita: [
+    {
+      id: 'v1', title: 'Adegua TCM',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Rivaluta e aggiorna i capitali sulla Temporanea Caso Morte: adegua la copertura alle esigenze attuali del cliente.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'p2', title: 'Cross-selling LOVIA',
-      status: 'arrivo', freq: null,
-      desc: 'Soluzione modulare LOVIA per la protezione del nucleo familiare con coperture flessibili.',
-      pdf: null,
+      id: 'v2', title: 'Cross-Sell LOVIA',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Soluzione modulare LOVIA per la protezione del nucleo familiare con coperture flessibili e personalizzabili.',
+      pdf: '#',
       img: 'https://images.unsplash.com/photo-1609220136736-443140cffec6?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'p3', title: 'Allianz Longevity Care',
-      status: 'arrivo', freq: null,
-      desc: 'Nuova soluzione per la non autosufficienza e la longevità: protezione per le fasi più delicate della vita.',
-      pdf: null,
+      id: 'v3', title: 'Proponi Longevity Care',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Soluzione per la non autosufficienza e la longevità: protezione dedicata alle fasi più delicate della vita.',
+      pdf: '#',
       img: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=720&h=320&fit=crop&auto=format&q=80'
     },
-  ],
-  investimento: [
     {
-      id: 'i1', title: 'VITARIV 2×',
-      status: 'attiva', freq: null,
-      desc: 'Incentivi doppi per i consulenti che collocano VITARIV: massimizza i risultati con questa campagna attiva.',
+      id: 'v4', title: '100% Vitariv – Clienti Unit',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Incentivi al 100% per il collocamento di VITARIV ai clienti con prodotti unit linked. Massimizza i risultati.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=720&h=320&fit=crop&auto=format&q=80'
     },
-  ],
-  altro: [
     {
-      id: 'a1', title: 'Mondo Impresa Clienti+',
-      status: 'attiva', freq: null,
-      desc: 'Pacchetti integrati per il segmento imprese: soluzioni complete per i clienti business del portafoglio.',
+      id: 'v5', title: '100% Vitariv – Clienti Vitariv',
+      status: 'scadenza', expiry: '30 giugno 2026', freq: '1° semestre 2026',
+      desc: 'Campagna dedicata ai clienti già titolari di VITARIV: proponi il rinnovo o l\'incremento del capitale investito.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+  ],
+  clienti: [
+    {
+      id: 'cl1', title: 'Google Business Profile',
+      status: 'arrivo', freq: null,
+      desc: 'Ottimizza la presenza digitale dell\'agenzia su Google: visibilità locale, reputazione online e recensioni.',
+      pdf: null,
+      img: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'cl2', title: 'Mondo Impresa Clienti+ | SMEG per PMI',
+      status: 'attiva', expiry: '31 dicembre 2026', freq: null,
+      desc: 'Pacchetto integrato Mondo Impresa in partnership con SMEG: soluzioni welfare su misura per le PMI del portafoglio.',
       pdf: '#',
       img: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=720&h=320&fit=crop&auto=format&q=80'
     },
     {
-      id: 'a2', title: 'Google Business Profile',
-      status: 'arrivo', freq: null,
-      desc: 'Ottimizza la presenza digitale dell\'agenzia su Google: visibilità locale e reputazione online.',
-      pdf: null,
-      img: 'https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?w=720&h=320&fit=crop&auto=format&q=80'
+      id: 'cl3', title: 'Mondo Impresa Clienti+ Previdenza – max 59 dip.',
+      status: 'attiva', expiry: '31 dicembre 2026', freq: null,
+      desc: 'Proposta previdenziale dedicata alle imprese con dipendenti fino a 59 anni: pacchetti welfare e protezione integrati.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=720&h=320&fit=crop&auto=format&q=80'
+    },
+    {
+      id: 'cl4', title: 'Mondo Impresa Clienti+ Previdenza – 60+ dip.',
+      status: 'attiva', expiry: '31 dicembre 2026', freq: null,
+      desc: 'Proposta previdenziale dedicata alle imprese con dipendenti dai 60 anni in su: soluzioni di protezione e longevità.',
+      pdf: '#',
+      img: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=720&h=320&fit=crop&auto=format&q=80'
     },
   ],
 };
@@ -1004,16 +1180,271 @@ const IconRepeat = () => (
   </svg>
 );
 
+// ── PDF GENERATOR — apre la card in nuova scheda e lancia la stampa ───────
+function generateCardPDF(campaign, tabColor, onToast) {
+  if (campaign.status === 'arrivo') {
+    onToast('📎 PDF non ancora disponibile — campagna in arrivo');
+    return;
+  }
+
+  const s = { attiva:{label:'Attiva',color:'#4ade80'}, scadenza:{label:'Scadenza',color:'#60a5fa'} }[campaign.status]
+         || { label:'In arrivo', color:'#fbbf24' };
+
+  const html = `<!DOCTYPE html>
+<html lang="it"><head>
+<meta charset="UTF-8">
+<title>${campaign.title} — Campagne Commerciali 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#0d1b2e;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:40px 20px}
+  .card{width:400px;background:#152540;border-radius:20px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+  .bar{height:4px;background:${tabColor}}
+  .img{width:100%;height:160px;object-fit:cover;display:block}
+  .sconto-bar{padding:8px 24px;background:linear-gradient(90deg,rgba(245,158,11,.13),rgba(239,68,68,.08));border-bottom:1px solid rgba(245,158,11,.25);font-size:12px;color:#fbbf24;display:flex;align-items:center;gap:6px}
+  .body{padding:22px 24px 24px}
+  .header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+  .title{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:#f8f9fc;line-height:1.25;flex:1}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;background:${s.color}22;color:${s.color};white-space:nowrap;flex-shrink:0}
+  .dot{width:6px;height:6px;border-radius:50%;background:${s.color}}
+  .desc{font-size:13px;color:#6b7a99;line-height:1.6;margin-bottom:14px}
+  .meta{font-size:12px;color:#60a5fa;display:flex;align-items:center;gap:6px}
+  .footer{font-size:10px;color:rgba(107,122,153,.7);text-align:center;letter-spacing:.04em}
+  @media print{
+    html,body{background:#0d1b2e}
+    .hint{display:none}
+    .wrap{padding:20px}
+  }
+</style>
+</head><body>
+<div class="wrap">
+  <div class="card">
+    <div class="bar"></div>
+    ${campaign.img ? `<img class="img" src="${campaign.img}">` : ''}
+    ${campaign.sconto ? `<div class="sconto-bar">⏰ ${campaign.sconto.detail}</div>` : ''}
+    <div class="body">
+      <div class="header">
+        <div class="title">${campaign.title}</div>
+        <div class="badge"><div class="dot"></div>${s.label}</div>
+      </div>
+      <div class="desc">${campaign.desc || ''}</div>
+      ${campaign.expiry ? `<div class="meta">📅 Scade il ${campaign.expiry}</div>` : campaign.freq ? `<div class="meta">🔁 ${campaign.freq}</div>` : ''}
+    </div>
+  </div>
+  <div class="footer hint">Campagne Commerciali 2026 &nbsp;·&nbsp; ${new Date().toLocaleDateString('it-IT')}</div>
+</div>
+<script>
+  window.onload = function(){
+    setTimeout(function(){ window.print(); }, 400);
+  };
+<\/script>
+</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (!win) onToast('⚠️ Abilita i popup per scaricare il PDF');
+  else      onToast('🖨️ Seleziona "Salva come PDF" nella finestra di stampa');
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+// ── WHATSAPP CARD SHARE ───────────────────────────────────────────────────
+function hexToRgbArr(hex) {
+  return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+}
+
+function wrapText(ctx, text, maxW, maxLines = 99) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line);
+      if (lines.length >= maxLines) { lines[lines.length-1] += '…'; return lines; }
+      line = w;
+    } else { line = test; }
+  }
+  if (line && lines.length < maxLines) lines.push(line);
+  return lines;
+}
+
+function roundedRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+async function generateShareCard(campaign, tabColor) {
+  const W = 960, H = 960;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const [tr, tg, tb] = hexToRgbArr(tabColor);
+
+  await document.fonts.ready;
+
+  // Clip everything to the card shape → transparent outside
+  const cx=0, cy=0, cw=W, ch=H, cr=32;
+  roundedRectPath(ctx, cx, cy, cw, ch, cr);
+  ctx.clip();
+
+  // Card background
+  ctx.fillStyle = '#152540';
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle radial glow inside card
+  const grd = ctx.createRadialGradient(W*0.85, H*0.08, 0, W*0.85, H*0.08, W*0.65);
+  grd.addColorStop(0, `rgba(${tr},${tg},${tb},0.18)`);
+  grd.addColorStop(1, 'transparent');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Top accent bar (already clipped to card shape)
+  ctx.fillStyle = tabColor;
+  ctx.fillRect(0, 0, W, 7);
+
+  // Photo
+  const photoH = 360;
+  try {
+    const resp = await fetch(campaign.img, { mode: 'cors' });
+    const blob2 = await resp.blob();
+    const burl = URL.createObjectURL(blob2);
+    const img = await new Promise((res, rej) => { const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=burl; });
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 7, W, photoH); ctx.clip();
+    const sc = Math.max(W/img.width, photoH/img.height);
+    const sw=img.width*sc, sh=img.height*sc;
+    ctx.drawImage(img, (W-sw)/2, 7+(photoH-sh)/2, sw, sh);
+    const fadeGrd = ctx.createLinearGradient(0, 7, 0, 7+photoH);
+    fadeGrd.addColorStop(0.45, 'transparent');
+    fadeGrd.addColorStop(1, '#152540');
+    ctx.fillStyle = fadeGrd; ctx.fillRect(0, 7, W, photoH);
+    ctx.restore();
+    URL.revokeObjectURL(burl);
+  } catch(_) {
+    ctx.fillStyle = `rgba(${tr},${tg},${tb},0.18)`;
+    ctx.fillRect(0, 7, W, photoH);
+  }
+
+  let ty = 7 + photoH + 40;
+
+  // Status badge
+  const statusMap = {
+    attiva:   ['#4ade80','rgba(34,197,94,0.18)','✅  Attiva'],
+    arrivo:   ['#fbbf24','rgba(245,158,11,0.18)','🔜  In arrivo'],
+    scadenza: ['#60a5fa','rgba(59,130,246,0.18)','📅  Scadenza'],
+  };
+  const [sc2, sbg, slabel] = statusMap[campaign.status] || statusMap.attiva;
+  ctx.font = '500 28px "DM Sans", sans-serif';
+  const btw = ctx.measureText(slabel).width + 56;
+  roundedRectPath(ctx, cx+44, ty, btw, 50, 25);
+  ctx.fillStyle = sbg; ctx.fill();
+  ctx.fillStyle = sc2; ctx.textBaseline='middle'; ctx.fillText(slabel, cx+44+28, ty+25);
+  ty += 72;
+
+  // Title
+  ctx.fillStyle = '#f8f9fc';
+  ctx.font = 'bold 58px "Outfit", sans-serif';
+  ctx.textBaseline = 'top';
+  const titleLines = wrapText(ctx, campaign.title, cw-88, 2);
+  titleLines.forEach(line => { ctx.fillText(line, cx+44, ty); ty += 70; });
+  ty += 10;
+
+  // Description (max 2 lines)
+  if (campaign.desc) {
+    ctx.fillStyle = 'rgba(107,122,153,0.9)';
+    ctx.font = '400 30px "DM Sans", sans-serif';
+    wrapText(ctx, campaign.desc, cw-88, 2).forEach(line => { ctx.fillText(line, cx+44, ty); ty += 42; });
+    ty += 12;
+  }
+
+  // Expiry
+  if (campaign.expiry) {
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = '500 28px "DM Sans", sans-serif';
+    ctx.fillText('📅  Scade il ' + campaign.expiry, cx+44, ty);
+    ty += 46;
+  } else if (campaign.freq) {
+    ctx.fillStyle = 'rgba(107,122,153,0.8)';
+    ctx.font = '500 28px "DM Sans", sans-serif';
+    ctx.fillText('🔁  ' + campaign.freq, cx+44, ty);
+    ty += 46;
+  }
+
+  // Sconto
+  if (campaign.sconto) {
+    ty += 8;
+    roundedRectPath(ctx, cx+44, ty, cw-88, 54, 12);
+    ctx.fillStyle = 'rgba(245,158,11,0.15)'; ctx.fill();
+    ctx.fillStyle = '#fbbf24'; ctx.font='600 26px "DM Sans",sans-serif'; ctx.textBaseline='middle';
+    ctx.fillText('🏷️  ' + campaign.sconto.detail, cx+64, ty+27);
+    ctx.textBaseline='top'; ty += 72;
+  }
+
+  // Footer bar
+  const fy = cy+ch-58;
+  ctx.fillStyle = `rgba(${tr},${tg},${tb},0.1)`;
+  ctx.fillRect(cx, fy, cw, 58);
+  ctx.fillStyle = `rgba(${tr},${tg},${tb},0.7)`;
+  ctx.font = '500 24px "DM Sans",sans-serif'; ctx.textBaseline='middle';
+  ctx.fillText('Campagne Commerciali 2026', cx+36, fy+29);
+  ctx.textAlign='right';
+  ctx.fillText(new Date().toLocaleDateString('it-IT'), cx+cw-36, fy+29);
+  ctx.textAlign='left';
+
+  return new Promise(res => canvas.toBlob(res, 'image/png'));
+}
+
+async function handleWhatsAppShare(campaign, tabColor, onToast) {
+  onToast('⏳ Preparazione immagine…');
+  try {
+    const blob = await generateShareCard(campaign, tabColor);
+    const fileName = campaign.title.replace(/[^a-zA-Z0-9]/g,'_') + '.png';
+    const file = new File([blob], fileName, { type: 'image/png' });
+
+    // 1. Mobile native share (iOS Safari 15+, Android Chrome)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: campaign.title });
+      onToast('✅ Immagine condivisa!');
+      return;
+    }
+
+    // 2. Desktop/fallback: copia negli appunti + apri WhatsApp Web
+    let copied = false;
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      copied = true;
+    } catch(_) {}
+
+    if (copied) {
+      window.open('https://web.whatsapp.com', '_blank');
+      onToast('📋 Immagine copiata! Incolla su WhatsApp con Ctrl+V / Cmd+V');
+    } else {
+      // 3. Fallback finale: scarica l'immagine
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 8000);
+      onToast('📥 Immagine salvata — allegala su WhatsApp');
+    }
+  } catch(e) {
+    if (e.name !== 'AbortError') onToast('❌ ' + (e.message || 'Errore condivisione'));
+  }
+}
+
 // ── MAPPA VIEW ────────────────────────────────────────────────────────────
 function MappaView({ onToast }) {
-  const handleDownload = (c) => {
-    if (!c.pdf) { onToast('📎 PDF non ancora disponibile'); return; }
-    onToast(`📥 Download avviato — ${c.title}`);
-  };
-  const handleWhatsApp = (c) => {
-    const text = encodeURIComponent(`Campagna: *${c.title}*\n${c.status === 'attiva' ? '✅ Attiva' : '🔜 In arrivo'}${c.expiry ? `\nScadenza: ${c.expiry}` : ''}${c.sconto ? `\n🏷️ ${c.sconto.detail}` : ''}\n\nCondiviso da Campagne Commerciali 2026`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  };
+  const [openTile, setOpenTile] = React.useState(null);
+  const isMobile = window.innerWidth <= 640;
+
+  const handleDownload = (c, tabColor) => { generateCardPDF(c, tabColor, onToast); };
+  const handleWhatsApp = (c, tabColor) => { handleWhatsAppShare(c, tabColor, onToast); };
 
   return (
     <div className="mappa-grid">
@@ -1022,9 +1453,11 @@ function MappaView({ onToast }) {
         return (
           <div
             key={tab.id}
-            className="mappa-tile"
-            onMouseEnter={e => e.currentTarget.style.borderColor = tab.color + '60'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
+            className={`mappa-tile ${(isMobile ? openTile === tab.id : false) ? 'mobile-open' : ''}`}
+            style={ isMobile && openTile === tab.id ? { borderColor: tab.color + '60' } : {} }
+            onMouseEnter={e => { if (!isMobile) e.currentTarget.style.borderColor = tab.color + '60'; }}
+            onMouseLeave={e => { if (!isMobile) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+            onClick={() => { if (isMobile) setOpenTile(openTile === tab.id ? null : tab.id); }}
           >
             <div className="mappa-tile-bg" style={{
               background: `radial-gradient(ellipse at top left, ${tab.color}18 0%, transparent 70%)`
@@ -1032,7 +1465,7 @@ function MappaView({ onToast }) {
             <div style={{ height: 3, background: tab.color, position: 'relative', zIndex: 2 }}/>
             <div className="mappa-tile-header">
               <div className="mappa-tile-icon" style={{ background: tab.color + '20' }}>
-                {{ motor:'🚗', rami:'🏠', salute:'🏥', protection:'🛡️', investimento:'📈', altro:'💼' }[tab.id]}
+                {{ motor:'🚗', salute:'🏥', casa:'🏠', impresa:'🏢', vita:'🛡️', clienti:'👥' }[tab.id]}
               </div>
               <div className="mappa-tile-name">{tab.label}</div>
               <div className="mappa-tile-count" style={{ background: tab.color + '25', color: tab.color }}>
@@ -1070,7 +1503,7 @@ function MappaView({ onToast }) {
                     <button
                       className="btn btn-download"
                       style={{ flex: 'none', padding: '5px 9px', fontSize: 11, borderRadius: 7, minWidth: 0 }}
-                      onClick={() => handleDownload(c)}
+                      onClick={() => handleDownload(c, tab.color)}
                       title="Scarica PDF"
                     >
                       <IconDownload/>
@@ -1078,7 +1511,7 @@ function MappaView({ onToast }) {
                     <button
                       className="btn btn-whatsapp"
                       style={{ flex: 'none', padding: '5px 9px', fontSize: 11, borderRadius: 7, minWidth: 0, marginLeft: 4 }}
-                      onClick={() => handleWhatsApp(c)}
+                      onClick={() => handleWhatsApp(c, tab.color)}
                       title="Condividi su WhatsApp"
                     >
                       <IconWhatsApp/>
@@ -1120,8 +1553,17 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
   const onPointerUp = (e) => {
     if (dragStart.current === null) return;
     const dx = e.clientX - dragStart.current;
-    if (dx < -40) setIdx(i => Math.min(campaigns.length - 1, i + 1));
-    if (dx >  40) setIdx(i => Math.max(0, i - 1));
+    const threshold = window.innerWidth <= 640 ? 30 : 40;
+    if (dx < -threshold) setIdx(i => Math.min(campaigns.length - 1, i + 1));
+    if (dx >  threshold) setIdx(i => Math.max(0, i - 1));
+    dragStart.current = null;
+  };
+  const onTouchStart = (e) => { dragStart.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (dragStart.current === null) return;
+    const dx = e.changedTouches[0].clientX - dragStart.current;
+    if (dx < -30) setIdx(i => Math.min(campaigns.length - 1, i + 1));
+    if (dx >  30) setIdx(i => Math.max(0, i - 1));
     dragStart.current = null;
   };
 
@@ -1137,12 +1579,13 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
     const absOff = Math.abs(offset);
     if (absOff > 3) return { display: 'none' };
 
-    const tx = offset * 280;
-    const tz = -absOff * 120;
-    const ry = offset * -28;
-    const scale = absOff === 0 ? 1 : absOff === 1 ? 0.82 : absOff === 2 ? 0.68 : 0.56;
-    const opacity = absOff === 0 ? 1 : absOff === 1 ? 0.7 : absOff === 2 ? 0.4 : 0.2;
-    const blur = absOff === 0 ? 0 : absOff * 1.5;
+    const mobile = window.innerWidth <= 640;
+    const tx     = offset * (mobile ? Math.min(window.innerWidth * 0.72, 260) : 280);
+    const tz     = -absOff * (mobile ? 60 : 120);
+    const ry     = offset * (mobile ? -18 : -28);
+    const scale  = absOff === 0 ? 1 : absOff === 1 ? (mobile ? 0.78 : 0.82) : absOff === 2 ? 0.62 : 0.5;
+    const opacity = absOff === 0 ? 1 : absOff === 1 ? 0.6 : absOff === 2 ? 0.3 : 0.1;
+    const blur   = absOff === 0 ? 0 : absOff * (mobile ? 2 : 1.5);
     const zIndex = 10 - absOff;
 
     return {
@@ -1160,11 +1603,13 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
         className="carousel-wrap"
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
-        style={{ '--accent-color': tabColor }}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        style={{ '--accent-color': tabColor, touchAction: 'pan-y' }}
       >
         <div className="carousel-stage">
           {campaigns.map((c, i) => (
-            <div key={c.id} className="carousel-item" style={getStyle(i)} onClick={() => setIdx(i)}>
+            <div key={c.id} className="carousel-item" style={getStyle(i)} onClick={() => setIdx(i)} data-side={i !== idx ? "true" : "false"}>
               <CampaignCard campaign={c} tabColor={tabColor} showDesc={showDesc} onToast={onToast} isActive={i === idx} />
             </div>
           ))}
@@ -1185,21 +1630,20 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
 }
 
 // ── CARD ───────────────────────────────────────────────────────────────────
-function CampaignCard({ campaign, tabColor, showDesc, cardStyle, onToast }) {
+function CampaignCard({ campaign, tabColor, showDesc, cardStyle, onToast, isActive }) {
   const s = STATUS[campaign.status];
 
-  const handleDownload = () => {
-    if (!campaign.pdf) { onToast('📎 PDF non ancora disponibile'); return; }
-    onToast('📥 Download avviato…');
-  };
-
-  const handleWhatsApp = () => {
-    const text = encodeURIComponent(`Campagna: *${campaign.title}*\n${campaign.status === 'attiva' ? '✅ Attiva' : '🔜 In arrivo'}${campaign.expiry ? `\nScadenza: ${campaign.expiry}` : ''}\n\nCondiviso da Campagne Commerciali 2026`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  };
+  const handleDownload = () => { generateCardPDF(campaign, tabColor, onToast); };
+  const handleWhatsApp = () => { handleWhatsAppShare(campaign, tabColor, onToast); };
 
   return (
-    <div className="campaign-card" style={{ animationDelay: `${Math.random() * 0.15}s` }}>
+    <div
+      className={`campaign-card${isActive ? ' campaign-card--active' : ''}`}
+      style={{
+        animationDelay: `${Math.random() * 0.12}s`,
+        '--card-glow': tabColor + '55',
+      }}
+    >
       <div className="card-top-bar" style={{ background: tabColor }} />
       <div className="card-illustration">
         {campaign.img
@@ -1310,11 +1754,17 @@ function App() {
   const { layout, cardStyle, showDesc } = tweaks;
 
   return (
+    <>
+    <div className="bg-orbs" aria-hidden="true">
+      <div className="bg-orb bg-orb-1" />
+      <div className="bg-orb bg-orb-2" />
+      <div className="bg-orb bg-orb-3" />
+    </div>
     <div className="app-wrap">
       {/* HEADER */}
       <header className="header">
         <div className="header-left">
-          <div className="header-eyebrow">Allianz — Agenzia</div>
+          <div className="header-eyebrow">Piano Commerciale — Agenzia</div>
           <div className="header-title">Campagne<br/><span>Commerciali</span></div>
         </div>
         <div className="header-year">2026</div>
@@ -1343,11 +1793,11 @@ function App() {
         <div className="view-toggle">
           <button className={`view-toggle-btn ${view === 'carousel' ? 'active' : ''}`} onClick={() => setView('carousel')}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="5" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><rect x="9" y="5" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/></svg>
-            Carosello
+            <span className="toggle-label">Carosello</span>
           </button>
           <button className={`view-toggle-btn ${view === 'mappa' ? 'active' : ''}`} onClick={() => setView('mappa')}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/></svg>
-            Mappa
+            <span className="toggle-label">Mappa</span>
           </button>
         </div>
       </div>
@@ -1429,6 +1879,7 @@ function App() {
       {/* TOAST */}
       {toast && <div className="toast">{toast}</div>}
     </div>
+    </>
   );
 }
 
