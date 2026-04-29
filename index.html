@@ -34,7 +34,7 @@
     --badge-semestrale: #8b5cf6;
   }
 
-  html, body { height: 100%; background: var(--navy); font-family: 'DM Sans', sans-serif; color: var(--white); overflow-x: hidden; }
+  html, body { height: 100%; background: #060e1c; font-family: 'DM Sans', sans-serif; color: var(--white); overflow-x: hidden; }
 
   #root { min-height: 100vh; }
 
@@ -44,6 +44,45 @@
     position: fixed; inset: 0; z-index: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
     pointer-events: none;
+  }
+
+  /* Dot grid */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+  }
+
+  /* Animated gradient orbs */
+  .bg-orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .bg-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(72px);
+    animation: orbDrift ease-in-out infinite;
+  }
+  .bg-orb-1 {
+    width: 700px; height: 600px; top: -260px; left: -180px;
+    background: radial-gradient(ellipse, rgba(59,130,246,0.18) 0%, transparent 70%);
+    animation-duration: 28s;
+  }
+  .bg-orb-2 {
+    width: 600px; height: 700px; bottom: -220px; right: -160px;
+    background: radial-gradient(ellipse, rgba(139,92,246,0.14) 0%, transparent 70%);
+    animation-duration: 34s; animation-delay: -12s;
+  }
+  .bg-orb-3 {
+    width: 500px; height: 450px; top: 45%; left: 50%;
+    margin: -225px 0 0 -250px;
+    background: radial-gradient(ellipse, rgba(6,182,212,0.09) 0%, transparent 70%);
+    animation-duration: 22s; animation-delay: -7s;
+  }
+  @keyframes orbDrift {
+    0%, 100% { transform: translate(0px, 0px) scale(1); }
+    25%  { transform: translate(22px, -18px) scale(1.04); }
+    50%  { transform: translate(-14px, 24px) scale(0.96); }
+    75%  { transform: translate(18px, 12px) scale(1.02); }
   }
 
   .app-wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 0 32px 80px; }
@@ -461,6 +500,52 @@
   @media (max-width: 400px) {
     .carousel-item { width: 92vw; }
     .campaign-card { height: auto; min-height: 440px; }
+  }
+
+  /* ── CARD ANIMATIONS ──────────────────────────────────────────────────── */
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes cardGlow {
+    0%, 100% { box-shadow: 0 8px 32px -8px rgba(0,0,0,0.5); }
+    50%       { box-shadow: 0 16px 48px -8px var(--card-glow, rgba(59,130,246,0.35)), 0 0 0 1px rgba(255,255,255,0.07); }
+  }
+  @keyframes barShimmer {
+    0%   { transform: translateX(-100%); }
+    60%, 100% { transform: translateX(200%); }
+  }
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); }
+    50%       { box-shadow: 0 0 0 5px rgba(74,222,128,0); }
+  }
+
+  .campaign-card {
+    animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    transition: box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+  .campaign-card--active {
+    animation: cardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both,
+               cardGlow 3.5s ease-in-out 0.6s infinite;
+    border-color: rgba(255,255,255,0.12) !important;
+  }
+  .campaign-card:hover {
+    box-shadow: 0 20px 56px -10px var(--card-glow, rgba(59,130,246,0.3)),
+                0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  /* Top bar shimmer */
+  .card-top-bar { position: relative; overflow: hidden; }
+  .card-top-bar::after {
+    content: '';
+    position: absolute; top: 0; bottom: 0; left: 0; width: 60%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+    animation: barShimmer 3.8s ease-in-out infinite;
+  }
+
+  /* Attiva badge pulse */
+  .badge-attiva .badge-dot {
+    animation: dotPulse 2.2s ease-in-out infinite;
   }
 </style>
 </head>
@@ -1147,7 +1232,7 @@ function generateCardPDF(campaign, tabColor, onToast) {
       ${campaign.expiry ? `<div class="meta">📅 Scade il ${campaign.expiry}</div>` : campaign.freq ? `<div class="meta">🔁 ${campaign.freq}</div>` : ''}
     </div>
   </div>
-  <div class="footer hint">Allianz — Campagne Commerciali 2026 &nbsp;·&nbsp; ${new Date().toLocaleDateString('it-IT')}</div>
+  <div class="footer hint">Campagne Commerciali 2026 &nbsp;·&nbsp; ${new Date().toLocaleDateString('it-IT')}</div>
 </div>
 <script>
   window.onload = function(){
@@ -1545,14 +1630,20 @@ function Carousel({ campaigns, tabColor, showDesc, onToast }) {
 }
 
 // ── CARD ───────────────────────────────────────────────────────────────────
-function CampaignCard({ campaign, tabColor, showDesc, cardStyle, onToast }) {
+function CampaignCard({ campaign, tabColor, showDesc, cardStyle, onToast, isActive }) {
   const s = STATUS[campaign.status];
 
   const handleDownload = () => { generateCardPDF(campaign, tabColor, onToast); };
   const handleWhatsApp = () => { handleWhatsAppShare(campaign, tabColor, onToast); };
 
   return (
-    <div className="campaign-card" style={{ animationDelay: `${Math.random() * 0.15}s` }}>
+    <div
+      className={`campaign-card${isActive ? ' campaign-card--active' : ''}`}
+      style={{
+        animationDelay: `${Math.random() * 0.12}s`,
+        '--card-glow': tabColor + '55',
+      }}
+    >
       <div className="card-top-bar" style={{ background: tabColor }} />
       <div className="card-illustration">
         {campaign.img
@@ -1663,11 +1754,17 @@ function App() {
   const { layout, cardStyle, showDesc } = tweaks;
 
   return (
+    <>
+    <div className="bg-orbs" aria-hidden="true">
+      <div className="bg-orb bg-orb-1" />
+      <div className="bg-orb bg-orb-2" />
+      <div className="bg-orb bg-orb-3" />
+    </div>
     <div className="app-wrap">
       {/* HEADER */}
       <header className="header">
         <div className="header-left">
-          <div className="header-eyebrow">Allianz — Agenzia</div>
+          <div className="header-eyebrow">Piano Commerciale — Agenzia</div>
           <div className="header-title">Campagne<br/><span>Commerciali</span></div>
         </div>
         <div className="header-year">2026</div>
@@ -1782,6 +1879,7 @@ function App() {
       {/* TOAST */}
       {toast && <div className="toast">{toast}</div>}
     </div>
+    </>
   );
 }
 
