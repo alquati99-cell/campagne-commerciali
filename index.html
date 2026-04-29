@@ -1196,7 +1196,7 @@ function roundedRectPath(ctx, x, y, w, h, r) {
 }
 
 async function generateShareCard(campaign, tabColor) {
-  const W = 1080, H = 1080;
+  const W = 960, H = 960;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
@@ -1204,58 +1204,50 @@ async function generateShareCard(campaign, tabColor) {
 
   await document.fonts.ready;
 
-  // Navy background
-  ctx.fillStyle = '#0d1b2e';
+  // Clip everything to the card shape → transparent outside
+  const cx=0, cy=0, cw=W, ch=H, cr=32;
+  roundedRectPath(ctx, cx, cy, cw, ch, cr);
+  ctx.clip();
+
+  // Card background
+  ctx.fillStyle = '#152540';
   ctx.fillRect(0, 0, W, H);
 
-  // Radial glow corner
-  const grd = ctx.createRadialGradient(W*0.85, H*0.1, 0, W*0.85, H*0.1, W*0.7);
+  // Subtle radial glow inside card
+  const grd = ctx.createRadialGradient(W*0.85, H*0.08, 0, W*0.85, H*0.08, W*0.65);
   grd.addColorStop(0, `rgba(${tr},${tg},${tb},0.18)`);
   grd.addColorStop(1, 'transparent');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, W, H);
 
-  // Card
-  const cx=60, cy=60, cw=W-120, ch=H-120, cr=28;
-  roundedRectPath(ctx, cx, cy, cw, ch, cr);
-  ctx.fillStyle = '#152540';
-  ctx.fill();
-
-  // Top accent bar
+  // Top accent bar (already clipped to card shape)
   ctx.fillStyle = tabColor;
-  ctx.fillRect(cx+cr, cy, cw-cr*2, 7);
-  ctx.beginPath(); ctx.arc(cx+cr, cy+cr, cr, Math.PI, 1.5*Math.PI); ctx.lineTo(cx+cr, cy+7); ctx.lineTo(cx+cr, cy); ctx.fillStyle=tabColor; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx+cw-cr, cy+cr, cr, 1.5*Math.PI, 2*Math.PI); ctx.lineTo(cx+cw, cy+7); ctx.lineTo(cx+cw-cr, cy+7); ctx.fillStyle=tabColor; ctx.fill();
-  // Simpler: just fill the top bar fully
-  roundedRectPath(ctx, cx, cy, cw, 7, cr);
-  ctx.fillStyle = tabColor; ctx.fill();
+  ctx.fillRect(0, 0, W, 7);
 
   // Photo
-  const photoH = 390;
+  const photoH = 360;
   try {
     const resp = await fetch(campaign.img, { mode: 'cors' });
-    const blob = await resp.blob();
-    const burl = URL.createObjectURL(blob);
+    const blob2 = await resp.blob();
+    const burl = URL.createObjectURL(blob2);
     const img = await new Promise((res, rej) => { const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=burl; });
     ctx.save();
-    roundedRectPath(ctx, cx, cy+7, cw, photoH);
-    ctx.clip();
-    const sc = Math.max(cw/img.width, photoH/img.height);
+    ctx.beginPath(); ctx.rect(0, 7, W, photoH); ctx.clip();
+    const sc = Math.max(W/img.width, photoH/img.height);
     const sw=img.width*sc, sh=img.height*sc;
-    ctx.drawImage(img, cx+(cw-sw)/2, cy+7+(photoH-sh)/2, sw, sh);
-    // fade to card bg at bottom
-    const fadeGrd = ctx.createLinearGradient(0, cy+7, 0, cy+7+photoH);
+    ctx.drawImage(img, (W-sw)/2, 7+(photoH-sh)/2, sw, sh);
+    const fadeGrd = ctx.createLinearGradient(0, 7, 0, 7+photoH);
     fadeGrd.addColorStop(0.45, 'transparent');
     fadeGrd.addColorStop(1, '#152540');
-    ctx.fillStyle = fadeGrd; ctx.fillRect(cx, cy+7, cw, photoH);
+    ctx.fillStyle = fadeGrd; ctx.fillRect(0, 7, W, photoH);
     ctx.restore();
     URL.revokeObjectURL(burl);
   } catch(_) {
-    roundedRectPath(ctx, cx, cy+7, cw, photoH);
-    ctx.fillStyle = `rgba(${tr},${tg},${tb},0.18)`; ctx.fill();
+    ctx.fillStyle = `rgba(${tr},${tg},${tb},0.18)`;
+    ctx.fillRect(0, 7, W, photoH);
   }
 
-  let ty = cy + 7 + photoH + 44;
+  let ty = 7 + photoH + 40;
 
   // Status badge
   const statusMap = {
