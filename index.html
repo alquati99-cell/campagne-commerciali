@@ -1331,18 +1331,30 @@ async function handleWhatsAppShare(campaign, tabColor, onToast) {
     const fileName = campaign.title.replace(/[^a-zA-Z0-9]/g,'_') + '.png';
     const file = new File([blob], fileName, { type: 'image/png' });
 
+    // 1. Mobile native share (iOS Safari 15+, Android Chrome)
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: campaign.title });
       onToast('✅ Immagine condivisa!');
+      return;
+    }
+
+    // 2. Desktop/fallback: copia negli appunti + apri WhatsApp Web
+    let copied = false;
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      copied = true;
+    } catch(_) {}
+
+    if (copied) {
+      window.open('https://web.whatsapp.com', '_blank');
+      onToast('📋 Immagine copiata! Incolla su WhatsApp con Ctrl+V / Cmd+V');
     } else {
-      // Desktop: scarica immagine + apri WhatsApp Web
+      // 3. Fallback finale: scarica l'immagine
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href=url; a.download=fileName; a.click();
+      a.href = url; a.download = fileName; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 8000);
-      const txt = encodeURIComponent(`*${campaign.title}*\n${campaign.status==='attiva'?'✅ Attiva':campaign.status==='arrivo'?'🔜 In arrivo':'📅 Scade il '+campaign.expiry}\n\nCampagne Commerciali 2026`);
-      setTimeout(() => window.open(`https://wa.me/?text=${txt}`, '_blank'), 800);
-      onToast('📥 Immagine salvata — WhatsApp in apertura');
+      onToast('📥 Immagine salvata — allegala su WhatsApp');
     }
   } catch(e) {
     if (e.name !== 'AbortError') onToast('❌ ' + (e.message || 'Errore condivisione'));
